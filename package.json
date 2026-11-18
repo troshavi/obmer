@@ -1,0 +1,11 @@
+{
+  "name": "obmer",
+  "version": "0.23.0",
+  "private": true,
+  "description": "Автономный браузерный инструмент обмера и уравнивания геометрии",
+  "scripts": {
+    "test": "node tests/test_obmer_core.js",
+    "check": "npm test"
+  },
+  "engines": { "node": ">=20" }
+}

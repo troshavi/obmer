@@ -1,0 +1,304 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Обмер — графическое уравнивание</title><style>
+*{box-sizing:border-box}body{margin:0;font:14px system-ui,Arial;background:#f4f6f9;color:#192638}header{height:58px;background:#172b45;color:white;display:flex;align-items:center;padding:0 18px;gap:14px}header strong{font-size:20px}header span{opacity:.8;font-size:12px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;height:calc(100vh - 58px)}main{position:relative;min-width:0}#canvas{width:100%;height:100%;display:block;background:white;touch-action:none;cursor:crosshair}.toolbar{position:absolute;left:12px;top:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 24px)}button{font:inherit;border:1px solid #c8d4e0;background:white;border-radius:7px;padding:8px 10px;cursor:pointer}button:hover{background:#edf4fd}button.active,button.primary{background:#235eb3;color:white;border-color:#235eb3}aside{overflow:auto;background:#f8fafd;border-left:1px solid #dce4ef;padding:14px}h3{margin:14px 0 8px;font-size:15px}p{line-height:1.45}.muted{font-size:12px;color:#65758b}.panel{border:1px solid #dce3ed;border-radius:9px;padding:11px;background:white;margin:10px 0}.status{background:#eaf1fc;padding:10px;border-radius:7px;line-height:1.5;font-size:12px}.lineitem{padding:9px;border:1px solid #dde4ee;border-radius:7px;margin:7px 0;background:white;cursor:pointer}.relation-option{display:block;width:100%;text-align:left;margin:6px 0;border-color:#a7c6ed;background:#f3f8ff}.relation-option:hover{background:#e0edff}.lineitem.active{border-color:#df8b20;background:#fff8e9}.lineitem header{background:transparent;color:inherit;height:auto;padding:0;display:flex;justify-content:space-between}.lineitem header strong{font-size:13px}.lineitem .small{font-size:11px;color:#718094}.row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:7px 0}label{font-size:12px}input[type=number]{width:105px;padding:7px;border:1px solid #bbc9db;border-radius:5px}input[type=checkbox]{accent-color:#235eb3}select{padding:7px;max-width:100%;border:1px solid #bbc9db;border-radius:5px;background:white}.smallbtn{padding:4px 7px;font-size:12px}.danger{color:#a32e35}.pill{font-size:11px;border-radius:20px;padding:3px 7px;background:#e9f1fc}.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px}.swatch{width:19px;height:4px;display:inline-block;vertical-align:middle;margin-right:4px}.hint{position:absolute;bottom:12px;left:12px;background:#fffdf2;border:1px solid #ead9ad;padding:8px 11px;border-radius:6px;max-width:70%;font-size:12px;pointer-events:none}.sep{border:0;border-top:1px solid #e1e7ef;margin:12px 0}.dimtag{fill:#213c5b;paint-order:stroke;stroke:white;stroke-linejoin:round;pointer-events:visiblePainted;cursor:pointer}.node{cursor:pointer}.linehit{stroke:transparent;cursor:pointer}.selectedline{stroke:#e39120!important}#canvas text{user-select:none}@media(max-width:850px){.layout{grid-template-columns:1fr;height:auto}main{height:58vh}aside{border:0;border-top:1px solid #dce4ef}}
+
+/* Compact inspector inspired by Figma UI3; standalone, no CDN dependencies. */
+:root{--ui-surface:#fff;--ui-muted:#747b86;--ui-border:#e4e6eb;--ui-hover:#f3f4f6;--ui-accent:#0d69df;--ui-radius:5px;--ui-space:8px}
+html,body{height:100%;overflow:hidden}body{font:12px/1.4 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:#fff;color:#25282e}
+.layout{height:100vh;grid-template-columns:minmax(0,1fr) 292px}main{height:100%;overflow:hidden}
+aside{background:var(--ui-surface);border-left:1px solid var(--ui-border);padding:0;scrollbar-width:thin;scrollbar-color:#cbd0d7 transparent}
+aside>h3{margin:0;padding:12px 12px 9px;font-size:12px;font-weight:650;position:sticky;top:0;background:#fff;z-index:2;border-bottom:1px solid var(--ui-border)}
+aside>.legend{padding:9px 12px 4px;gap:10px;font-size:10px;color:var(--ui-muted)}
+aside>.muted{margin:4px 12px;font-size:11px}
+aside>.panel{margin:0;border:0;border-top:1px solid var(--ui-border);border-radius:0;padding:11px 12px;background:#fff}
+aside>.panel>b{display:block;font-size:11px;font-weight:650;margin:0 0 8px;color:#30343b}
+aside .muted{font-size:11px;color:var(--ui-muted);line-height:1.45;margin:5px 0}
+aside .row{margin:5px 0;gap:6px}aside label{font-size:11px;color:#606874}
+aside input[type=number],aside select{width:100%;max-width:100%;min-width:0;height:29px;padding:4px 7px;border:1px solid #d7dce3;border-radius:var(--ui-radius);background:#fff;font:12px system-ui;color:#20252d}
+aside label:has(input[type=number]){flex:1 1 90px;min-width:90px}
+aside button{min-height:28px;padding:5px 8px;border:1px solid #dce0e6;border-radius:var(--ui-radius);background:#fff;font-size:11px;color:#313740}
+aside button:hover{background:var(--ui-hover)}aside button:focus-visible,aside input:focus-visible{outline:2px solid #8ab8f6;outline-offset:1px}
+aside .status{padding:8px 9px;border-radius:var(--ui-radius);font-size:11px;background:#f3f6fb;color:#425064}
+#lines{padding:4px 8px 9px;max-height:260px;overflow-y:auto;scrollbar-width:thin}
+.lineitem{margin:1px 0;padding:6px 8px;border:1px solid transparent;border-radius:4px;background:#fff}
+.lineitem:hover{background:var(--ui-hover)}.lineitem.active{background:#eaf2ff;border-color:#d0e3ff}
+.lineitem header{padding:0;height:auto;gap:4px}.lineitem header strong{font-size:11px;font-weight:600}.lineitem .small{font-size:10px;margin-top:2px;color:var(--ui-muted)}
+.pill{padding:2px 6px;border-radius:3px;font-size:10px;background:#f0f2f5;color:#6b7380}
+#bindings{display:flex;flex-wrap:wrap;gap:3px}#residuals h3{font-size:11px;margin:10px 0 5px}#residuals .row{margin:2px 0}
+.relation-option{margin:3px 0!important;padding:6px 8px!important;border-color:#e1e7ef!important;background:#f7f9fc!important}
+.toolbar{top:10px;left:10px;gap:4px;padding:5px;background:#fff;border:1px solid #e4e6eb;border-radius:9px;box-shadow:0 2px 10px #19263816;max-width:calc(100% - 20px)}
+.toolbar button{padding:6px 9px;border-color:transparent;border-radius:5px;font-size:12px}.toolbar button.active{background:#e8f1ff;color:#1255ad}.toolbar button.primary{background:#2469cf;color:white}
+.hint{font-size:11px;padding:7px 9px;border-color:#e7e3d8;max-width:75%}
+.ui-help{margin:4px 0}.ui-help summary{cursor:pointer;font-size:10px;color:#858c96;user-select:none}.ui-help[open]{padding-bottom:3px}.ui-help p{margin:6px 0!important}
+@media(max-width:850px){html,body{overflow:auto}.layout{height:auto;grid-template-columns:1fr}main{height:60vh}aside{border-left:0;border-top:1px solid var(--ui-border)}#lines{max-height:220px}}
+</style></head><body><div class="layout"><main><svg id="canvas" viewBox="0 0 1100 760"></svg><div class="toolbar"><button id="selectTool" class="active">↖ Выделение</button><button id="drawTool">╱ Линия</button><button id="rulerTool">📏 Линейка</button><button id="solve" class="primary">Уравнять МНК</button><button id="fit">Вписать</button></div><div class="hint" id="hint">Выделение: щёлкни по линии, затем задай размер в боковой панели.</div></main><aside><h3>Линии эскиза</h3><div class="legend"><span><i class="swatch" style="background:#111"></i>Определена</span><span><i class="swatch" style="background:#2473d4"></i>Недоопределена</span><span><i class="swatch" style="background:#e6bc24"></i>Уравненная</span></div><details class="ui-help" style="margin:4px 12px"><summary>Горячие клавиши и помощь</summary><p class="muted">Shift + щелчок — выбрать две линии, две точки или точку и линию; Delete — удалить выделенные; Ctrl+Z / ⌘Z — отменить действие; Esc — режим выделения.</p></details><div id="lines"></div><div class="panel" id="rulerPanel" style="display:none"><b>Линейка · измерение</b><details class="ui-help"><summary>Справка</summary><p class="muted">Щёлкни начальную и конечную точки. При приближении к вершине включается привязка. Измерение не меняет чертёж.</p></details><div class="status" id="rulerReadout">Укажи первую точку</div><div class="row"><button id="rulerClear">Сбросить измерение</button></div></div><div class="panel" id="properties"><b>Свойства линии</b><details class="ui-help"><summary>Справка</summary><p class="muted">Выбери линию.</p></details></div><div class="panel" id="contextRelationsPanel"><b>Доступные привязки для выделения</b><div id="contextRelations"></div></div><div class="panel" id="manualRelations" style="display:none"><b>Геометрические привязки</b><details class="ui-help"><summary>Справка</summary><p class="muted">Выбери тип привязки, затем необходимые объекты на чертеже.</p></details><div class="row"><select id="relationType"><option value="pointline">Точка к линии</option><option value="parallel">Параллельность</option><option value="collinear">Коллинеарность</option><option value="perpendicular">Перпендикулярность</option><option value="horizontal">Горизонтальность</option><option value="vertical">Вертикальность</option></select><button id="applyRelation">Применить к выбранной</button></div><div id="relationsList"></div></div><div hidden aria-hidden="true"><span id="pointSelection"></span><button id="mergePoints" type="button"></button><button id="clearPoints" type="button"></button><span id="bindings"></span></div><div class="panel"><b>Уравнивание</b><details class="ui-help"><summary>Справка</summary><p class="muted">Ручной эскиз — только начальное приближение. После ввода размеров координаты линий заменяются рассчитанными по МНК. При противоречивых измерениях показывается предупреждение. Длины в мм, σ влияет на вес замера.</p></details><div class="row"><label>σ, мм <input id="sigma" type="number" min="0" step="0.1" value="5"></label><label><input id="showAdjusted" type="checkbox" checked> Показывать жёлтый слой</label></div><div class="status" id="status">Нарисуй линии, свяжи концы и введи измеренные длины.</div><div id="residuals"></div><div class="row"><button id="freezeResiduals" title="Перенести абсолютные невязки в σ, сохранив меньшие существующие значения">Зафиксировать невязки в σ</button></div><p class="muted">Переносит модуль текущей невязки каждой измеренной линии в её σ. Если заданное σ уже меньше невязки, оно сохраняется. Пустое поле σ означает использование значения по умолчанию при МНК. Нулевая невязка устанавливает σ = 0 (эталон). Уже установленный эталон сохраняется.</p></div><div class="panel"><b>Файлы</b><div class="row"><button id="save">JSON</button><button id="load">Открыть JSON</button><button id="export">SVG</button><button id="exportDxf" title="Экспорт уравненной геометрии в AutoCAD DXF, миллиметры">DXF (AutoCAD)</button><button id="reset" class="danger">Очистить</button></div><input type="file" id="file" accept=".json" hidden></div></aside></div><script>
+'use strict';const NS='http://www.w3.org/2000/svg',svg=document.getElementById('canvas'),$=id=>document.getElementById(id);let rulerStart=null,rulerEnd=null,rulerHover=null,rulerSnap=false;let relations=[],relationFirst=null,relSelection=[],nodes=[],lines=[],mode='select',selected=null,multiSelected=[],selectedPoints=[],selectedRelation=null,first=null,drag=null,solution=null,nextNode=1,nextLine=1,view={x:0,y:0,w:1100,h:760};const xy=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),getNode=id=>nodes.find(n=>n.id===id),getLine=id=>lines.find(l=>l.id===id),fmt=x=>Number(x).toFixed(1),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));function elem(tag,attrs={},parent=svg){let n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));parent.appendChild(n);return n}function point(e){let p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}function newNode(p){let n={id:nextNode++,x:p.x,y:p.y};nodes.push(n);return n.id}function addLine(a,b){if(a===b)return;let l={id:nextLine++,a,b,d:null,s:null,axis:'free'};lines.push(l);selected=l.id;solution=null;render()}function invalidate(){solution=null}function cleanupOrphanNodes(){const used=new Set(lines.flatMap(l=>[l.a,l.b]));nodes=nodes.filter(n=>used.has(n.id));selectedPoints=selectedPoints.filter(id=>used.has(id))}function setMode(m){if(m!=='ruler'){rulerStart=null;rulerEnd=null;rulerHover=null}if(mode==='draw'&&first!==null){cleanupOrphanNodes();invalidate()}mode=m;multiSelected=[];selectedPoints=[];selectedRelation=null;first=null;drag=null;['select','draw','ruler'].forEach(t=>$(t+'Tool').classList.toggle('active',t===m));relationFirst=null;relSelection=[];$('hint').textContent=({select:'Выделение: щёлкни по линии. Перетаскивай точки: заданные длины сохраняются.',draw:'Линия: щёлкни начало и конец. Можно привязываться к существующим точкам.',bind:'Привязка: щёлкни два конца разных линий — они объединятся в одну вершину.',relation:'Привязки: выбери тип справа, затем точку и линию либо две линии. Для H/V выбери одну линию.',ruler:'Линейка: щёлкни две точки. Привязка к вершинам автоматическая. Следующий щелчок начнёт новое измерение.'})[m];render()};['select','draw','ruler'].forEach(t=>$(t+'Tool').onclick=()=>setMode(t));function nearest(p,limit=13){let best=null,dist=limit;for(let n of nodes){let d=xy(n,p);if(d<dist){best=n.id;dist=d}}return best}function merge(a,b){if(a===b)return;let na=getNode(a),nb=getNode(b);if(!na||!nb)return;na.x=(na.x+nb.x)/2;na.y=(na.y+nb.y)/2;for(let l of lines){if(l.a===b)l.a=a;if(l.b===b)l.b=a}nodes=nodes.filter(n=>n.id!==b);lines=lines.filter(l=>l.a!==l.b);invalidate();selected=null}svg.addEventListener('pointerdown',e=>{if(e.button!==0)return;let p=point(e),nodeEl=e.target.closest('[data-node]'),lineEl=e.target.closest('[data-line]'),hit=nodeEl?+nodeEl.dataset.node:nearest(p);if(e.target.closest('[data-relation-icon]')){selectRelationObjects(e.target.closest('[data-relation-icon]').dataset.relationIcon);return}if(mode==='ruler'){let q=rulerTarget(p);if(rulerStart===null||rulerEnd!==null){rulerStart=q;rulerEnd=null}else rulerEnd=q;rulerHover=q;render();return}if(mode==='draw'){if(first===null){first=hit??newNode(p)}else{let end=hit??newNode(p);if(end!==first)addLine(first,end);else cleanupOrphanNodes();first=null}render();return}if(mode==='relation'){relationPick(nodeEl?{kind:'node',id:+nodeEl.dataset.node}:lineEl?{kind:'line',id:+lineEl.dataset.line}:null);return}if(mode==='bind'){if(hit===null)return;if(first===null)first=hit;else{merge(first,hit);first=null}render();return}if(nodeEl){choosePoint(hit,e.shiftKey);if(!e.shiftKey){drag=hit;svg.setPointerCapture(e.pointerId)}return}if(lineEl){chooseLine(+lineEl.dataset.line,e.shiftKey);return}else{selected=null;multiSelected=[];selectedPoints=[];selectedRelation=null;render()}});function moveNodeWithFixedLengths(id,p){let n=getNode(id);if(!n)return;const fixed=lines.filter(l=>(l.a===id||l.b===id)&&Number(l.d)>0);if(!fixed.length){n.x=p.x;n.y=p.y;return}if(fixed.length>1){$('status').textContent='Точка соединяет несколько линий с заданной длиной. Перетаскивание заблокировано, чтобы сохранить размеры.';return}const l=fixed[0],other=getNode(l.a===id?l.b:l.a);if(!other)return;const radius=Number(l.d)/10;let dx=p.x-other.x,dy=p.y-other.y,dist=Math.hypot(dx,dy);if(dist<1e-9){dx=n.x-other.x;dy=n.y-other.y;dist=Math.hypot(dx,dy)}if(dist<1e-9){dx=1;dy=0;dist=1}n.x=other.x+radius*dx/dist;n.y=other.y+radius*dy/dist}svg.addEventListener('pointermove',e=>{if(mode==='ruler'){rulerHover=rulerTarget(point(e));render();return}if(drag===null)return;let p=point(e),n=getNode(drag);if(n){moveNodeWithFixedLengths(drag,p);invalidate();render()}});svg.addEventListener('pointerup',()=>{if(drag!==null){drag=null;autoAdjust();render()}});svg.addEventListener('pointercancel',()=>{drag=null;autoAdjust();render()});
+function constraintRows(){let ids=nodes.map(n=>n.id),idx=new Map(ids.map((id,i)=>[id,i])),rows=[],N=nodes.length*2;function add(entries){let r=Array(N).fill(0);for(let [id,axis,v] of entries)r[2*idx.get(id)+axis]+=v;rows.push(r)}for(let l of lines){let a=getNode(l.a),b=getNode(l.b);if(!a||!b)continue;let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;if(l.d>0)add([[l.a,0,-dx/d],[l.a,1,-dy/d],[l.b,0,dx/d],[l.b,1,dy/d]]);if(l.axis==='h')add([[l.a,1,-1],[l.b,1,1]]);if(l.axis==='v')add([[l.a,0,-1],[l.b,0,1]])}return rows}function rank(a,tol=1e-7){if(!a.length)return 0;let A=a.map(r=>r.slice()),m=A.length,n=A[0].length,r=0;for(let c=0;c<n&&r<m;c++){let k=r;for(let i=r+1;i<m;i++)if(Math.abs(A[i][c])>Math.abs(A[k][c]))k=i;if(Math.abs(A[k][c])<tol)continue;[A[r],A[k]]=[A[k],A[r]];let v=A[r][c];for(let j=c;j<n;j++)A[r][j]/=v;for(let i=r+1;i<m;i++){let q=A[i][c];for(let j=c;j<n;j++)A[i][j]-=q*A[r][j]}r++}return r}function determined(){// Relative rigidity: line endpoints may be constrained even if the entire sketch can translate or rotate.
+let rows=constraintRows(),base=rank(rows),idx=new Map(nodes.map((n,i)=>[n.id,i])),N=2*nodes.length,flags=new Map;for(let l of lines){let a=getNode(l.a),b=getNode(l.b);if(!a||!b)continue;let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;let rr=Array(N).fill(0);rr[2*idx.get(l.a)]=-dx/d;rr[2*idx.get(l.a)+1]=-dy/d;rr[2*idx.get(l.b)]=dx/d;rr[2*idx.get(l.b)+1]=dy/d;let lengthFixed=rank([...rows,rr])===base; // A line is fully determined when its length and its orientation relative to its connected geometry are constrained.
+let fully=lengthFixed&&(l.axis!=='free'||inMeasuredTriangle(l));flags.set(l.id,fully)}return flags}function inMeasuredTriangle(l){if(!(l.d>0))return false;for(let n of nodes){if(n.id===l.a||n.id===l.b)continue;let a=lines.some(q=>q.d>0&&((q.a===l.a&&q.b===n.id)||(q.b===l.a&&q.a===n.id)));let b=lines.some(q=>q.d>0&&((q.a===l.b&&q.b===n.id)||(q.b===l.b&&q.a===n.id)));if(a&&b)return true}return false}function connectedLines(start){let visited=new Set([start]),todo=[start];while(todo.length){let id=todo.pop();for(let l of lines){let other=l.a===id?l.b:l.b===id?l.a:null;if(other!==null&&!visited.has(other)){visited.add(other);todo.push(other)}}}return lines.filter(l=>visited.has(l.a)&&visited.has(l.b))}
+function choosePoint(id,add=false){selectedRelation=null;if(!add){selected=null;multiSelected=[]}if(add){if(selectedPoints.includes(id))selectedPoints=selectedPoints.filter(x=>x!==id);else{if(selectedPoints.length>=2)selectedPoints.shift();selectedPoints.push(id)}}else selectedPoints=[id];render()}function mergeSelectedPoints(){if(selectedPoints.length!==2)return;let [a,b]=selectedPoints;merge(a,b);selectedPoints=[];autoAdjust();render()}$('mergePoints').onclick=mergeSelectedPoints;$('clearPoints').onclick=()=>{selectedPoints=[];render()};function chooseLine(id,add=false){selectedRelation=null;if(!add)selectedPoints=[];if(add){if(!multiSelected.length&&selected!==null)multiSelected=[selected];if(multiSelected.includes(id))multiSelected=multiSelected.filter(x=>x!==id);else multiSelected.push(id);selected=multiSelected.at(-1)??null}else{selected=id;multiSelected=[id]}render()}function deleteSelected(){if(selectedRelation!==null){deleteSelectedRelation();return}let ids=new Set(multiSelected.length?multiSelected:(selected===null?[]:[selected]));if(!ids.size)return;lines=lines.filter(l=>!ids.has(l.id));relations=relations.filter(r=>!ids.has(r.a)&&!ids.has(r.b));let used=new Set(lines.flatMap(l=>[l.a,l.b]));nodes=nodes.filter(n=>used.has(n.id));relations=relations.filter(r=>r.point===null||r.point===undefined||used.has(r.point));selected=null;multiSelected=[];selectedPoints=[];first=null;invalidate();autoAdjust();render()}document.addEventListener('keydown',e=>{const el=e.target;const typing=el instanceof HTMLElement&&(el.isContentEditable||['INPUT','TEXTAREA','SELECT'].includes(el.tagName));if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==='z'&&!typing){e.preventDefault();undoLastAction();return}if(e.key==='Escape'){if(typing)el.blur();setMode('select');selectedPoints=[];render();return}if((e.key==='Delete'||e.key==='Backspace')&&!typing){e.preventDefault();deleteSelected()}});
+// Undo snapshots track geometry changes, not UI selection, zoom or cursor movement.
+const undoStack=[];let lastModelSnapshot=null,restoringUndo=false;
+function modelSnapshot(){
+ const used=new Set(lines.flatMap(l=>[l.a,l.b]));
+ return JSON.stringify({nodes:nodes.filter(n=>used.has(n.id)),lines,relations,solution,nextNode,nextLine});
+}
+function resetUndoHistory(){undoStack.length=0;lastModelSnapshot=modelSnapshot()}
+function captureHistory(){
+ if(restoringUndo||drag!==null)return;
+ const current=modelSnapshot();
+ if(lastModelSnapshot===null){lastModelSnapshot=current;return}
+ if(current!==lastModelSnapshot){undoStack.push(lastModelSnapshot);if(undoStack.length>100)undoStack.shift();lastModelSnapshot=current}
+}
+function undoLastAction(){
+ // A pending drag is a single action; cancel the gesture before undoing it.
+ if(drag!==null)drag=null;
+ captureHistory();
+ if(!undoStack.length){$('status').textContent='Нет действий для отмены.';return false}
+ const previous=JSON.parse(undoStack.pop());restoringUndo=true;
+ nodes=previous.nodes;lines=previous.lines;relations=previous.relations;solution=previous.solution;
+ nextNode=previous.nextNode;nextLine=previous.nextLine;
+ selected=null;multiSelected=[];selectedPoints=[];selectedRelation=null;
+ first=null;relationFirst=null;drag=null;
+ lastModelSnapshot=modelSnapshot();
+ render();restoringUndo=false;
+ $('status').textContent='Последнее действие отменено.';
+ return true;
+}
+function renderContextRelations(){
+  const panel=$('contextRelationsPanel');
+  if(selectedRelation!==null&&relations.some(r=>String(r.id)===String(selectedRelation))){
+    panel.querySelector('b').textContent='Выбранная привязка';
+    $('contextRelations').innerHTML='<button id="deleteSelectedRelation" class="relation-option danger">Удалить привязку (Del)</button>';
+    $('deleteSelectedRelation').onclick=deleteSelectedRelation;
+    return;
+  }
+  selectedRelation=null;
+  panel.querySelector('b').textContent='Доступные привязки для выделения';
+  const el=$('contextRelations');if(!el)return;
+ const lineIds=[...new Set(multiSelected.filter(id=>!!getLine(id)))];
+ if(selected!==null&&getLine(selected)&&!lineIds.includes(selected))lineIds.push(selected);
+ const pointIds=[...new Set(selectedPoints.filter(id=>!!getNode(id)))];
+ const options=[];
+ const add=(label,desc,fn)=>options.push({label,desc,fn});
+ if(pointIds.length===2&&lineIds.length===0){
+   add('◎ Совпадение точек','Объединить P'+pointIds[0]+' и P'+pointIds[1],()=>mergeSelectedPoints());
+ }
+ if(lineIds.length===1&&pointIds.length===0){
+   const id=lineIds[0],line=getLine(id);
+   if(line.axis!=='h'&&!relations.some(r=>r.type==='horizontal'&&r.a===id))add('━ Горизонтальность','Линия L'+id,()=>addRelation('horizontal',id));
+   if(line.axis!=='v'&&!relations.some(r=>r.type==='vertical'&&r.a===id))add('┃ Вертикальность','Линия L'+id,()=>addRelation('vertical',id));
+ }
+ if(lineIds.length===2&&pointIds.length===0){
+   const [a,b]=lineIds;
+   for(const [type,label] of [['parallel','∥ Параллельность'],['collinear','≡ Коллинеарность'],['perpendicular','⊥ Перпендикулярность']]){
+     if(!relations.some(r=>r.type===type&&((r.a===a&&r.b===b)||(r.a===b&&r.b===a))))add(label,'L'+a+' и L'+b,()=>addRelation(type,a,b));
+   }
+ }
+ if(lineIds.length===1&&pointIds.length===1){
+   const l=getLine(lineIds[0]),p=pointIds[0];
+   if(l.a!==p&&l.b!==p&&!relations.some(r=>r.type==='pointline'&&r.a===l.id&&r.point===p))
+     add('◉ Точка на линии','P'+p+' на L'+l.id,()=>addRelation('pointline',l.id,null,p));
+ }
+ const count=lineIds.length+pointIds.length;
+ if(count===0){el.innerHTML='<p class="muted">Выдели линию или точку. Shift + щелчок добавляет второй объект.</p>';return}
+ let heading=`<p class="muted">Выбрано: ${lineIds.map(id=>'L'+id).concat(pointIds.map(id=>'P'+id)).join(' + ')}</p>`;
+ if(!options.length){el.innerHTML=heading+'<p class="muted">Для этой комбинации нет доступных новых привязок. Выбери одну линию, две линии, две точки или точку и линию.</p>';return}
+ el.innerHTML=heading+options.map((o,i)=>`<button class="relation-option" data-context-relation="${i}" title="${o.desc}">${o.label}</button>`).join('');
+ el.querySelectorAll('[data-context-relation]').forEach(btn=>btn.addEventListener('click',()=>options[+btn.dataset.contextRelation].fn()));
+}
+function rulerTarget(p){const id=nearest(p,12*screenUnit());const n=id===null?null:getNode(id);return n?{x:n.x,y:n.y,node:id}:{x:p.x,y:p.y,node:null}}function screenUnit(){const bounds=svg.getBoundingClientRect();return view.w/Math.max(bounds.width,1)}function render(){captureHistory();renderContextRelations();const u=screenUnit();svg.replaceChildren();svg.setAttribute('viewBox',`${view.x} ${view.y} ${view.w} ${view.h}`);let defs=elem('defs'),grid=elem('pattern',{id:'grid',width:25,height:25,patternUnits:'userSpaceOnUse'},defs);elem('path',{d:'M25 0H0V25',fill:'none',stroke:'#edf1f6','stroke-width':.7*u},grid);elem('rect',{x:view.x,y:view.y,width:view.w,height:view.h,fill:'url(#grid)'});let flags=determined();if(solution&&$('showAdjusted').checked){let g=elem('g',{'pointer-events':'none'});for(let l of lines){let a=solution[l.a],b=solution[l.b];if(a&&b)elem('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#e6bc24','stroke-width':2.2*u,'stroke-linecap':'round',opacity:.88},g)}}for(let l of lines){let a=getNode(l.a),b=getNode(l.b);if(!a||!b)continue;let color=flags.get(l.id)?'#111111':'#2473d4';elem('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:color,'stroke-width':(multiSelected.includes(l.id)||selected===l.id?2.5:1.15)*u});elem('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:'linehit','stroke-width':14*u,'data-line':l.id});let mx=(a.x+b.x)/2,my=(a.y+b.y)/2;let angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;if(angle>90)angle-=180;if(angle< -90)angle+=180;let t=elem('text',{x:0,y:-4*u,'text-anchor':'middle',class:'dimtag','data-line':l.id,'font-size':12*u,'stroke-width':3*u,transform:`translate(${mx} ${my}) rotate(${angle})`});t.textContent=`L${l.id}${l.d>0?' · '+l.d+' мм':''}${l.axis==='h'?' · H':l.axis==='v'?' · V':''}`;}
+drawRelationIcons();drawRuler(u);for(let n of nodes){elem('circle',{cx:n.x,cy:n.y,r:(first===n.id?6:4)*u,fill:selectedPoints.includes(n.id)?'#f59e0b':first===n.id?'#ef9b22':'#fff',stroke:selectedPoints.includes(n.id)?'#b45309':'#244d79','stroke-width':(selectedPoints.includes(n.id)?2:1.4)*u,class:'node','data-node':n.id});let t=elem('text',{x:n.x+8*u,y:n.y+13*u,fill:'#657b93','font-size':11*u,'pointer-events':'none'});t.textContent='P'+n.id}renderSide(flags)}
+function drawRuler(u){
+ $('rulerPanel').style.display=mode==='ruler'?'block':'none';
+ if(mode!=='ruler')return;
+ const a=rulerStart,b=rulerEnd||rulerHover;
+ let message='Укажи первую точку';
+ if(a){message='Укажи вторую точку';if(b){const dist=xy(a,b)*10;message=(rulerEnd?'Измерено: ':'Предпросмотр: ')+fmt(dist)+' мм';
+ const g=elem('g',{'pointer-events':'none'});
+ elem('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#d9480f','stroke-width':1.5*u,'stroke-dasharray':`${6*u} ${4*u}`},g);
+ const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,ang0=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
+ let ang=ang0;if(ang>90)ang-=180;if(ang< -90)ang+=180;
+ const txt=elem('text',{x:0,y:-13*u/3,fill:'#b8320b','font-size':13*u,'font-weight':'bold','text-anchor':'middle','stroke':'white','stroke-width':3*u,'paint-order':'stroke',transform:`translate(${mx} ${my}) rotate(${ang})`},g);txt.textContent=fmt(dist)+' мм';
+ for(const p of [a,b]){elem('circle',{cx:p.x,cy:p.y,r:5*u,fill:p.node!==null?'#f59e0b':'white',stroke:'#d9480f','stroke-width':1.6*u},g)}
+ }}else if(rulerHover){elem('circle',{cx:rulerHover.x,cy:rulerHover.y,r:5*u,fill:rulerHover.node!==null?'#f59e0b':'white',stroke:'#d9480f','stroke-width':1.5*u,'pointer-events':'none'})}
+ $('rulerReadout').textContent=message+(rulerEnd?' · Щёлкни для нового измерения':'');
+}
+$('rulerClear').onclick=()=>{rulerStart=null;rulerEnd=null;rulerHover=null;render()};
+function renderSide(flags){$('lines').innerHTML=lines.length?lines.map(l=>{let a=getNode(l.a),b=getNode(l.b),length=a&&b?fmt(xy(a,b)*10):'?';return `<div class="lineitem ${multiSelected.includes(l.id)||selected===l.id?'active':''}" data-choose="${l.id}"><header><strong style="color:${flags.get(l.id)?'#111':'#2473d4'}">L${l.id} · P${l.a}—P${l.b}</strong><span class="pill">${flags.get(l.id)?'Определена':'Недоопределена'}</span></header><div class="small">Эскиз: ${length} мм · Замер: ${l.d>0?l.d+' мм':'не задан'} · ${l.axis==='h'?'Горизонталь':l.axis==='v'?'Вертикаль':'Свободная'}</div></div>`}).join(''):'<p class="muted">Линий пока нет. Выбери инструмент «Линия».</p>';let l=getLine(selected);if(!l){$('properties').innerHTML='<b>Свойства линии</b><p class="muted">Выбери линию на чертеже или в списке.</p>'}else{$('properties').innerHTML=`<b>Линия L${l.id}</b><div class="row"><label>Измеренная длина, мм<br><input id="length" type="number" min="0" step="0.1" placeholder="Не задана" value="${l.d??''}"></label><label>σ, мм<br><input id="lineSigma" type="number" min="0" step="0.1" value="${l.s??''}" placeholder="Не задано (по умолчанию: ${$('sigma').value} мм)"></label></div><div class="row"><label>Направление<br><select id="axis"><option value="free" ${l.axis==='free'?'selected':''}>Свободное</option><option value="h" ${l.axis==='h'?'selected':''}>Горизонталь</option><option value="v" ${l.axis==='v'?'selected':''}>Вертикаль</option></select></label></div><div class="row"><button id="deleteLine" class="danger">Удалить выделенные (Del)</button></div><p class="muted"><b>σ (сигма)</b> — оценка стандартной погрешности измерения в миллиметрах. σ = 0 — эталонный размер: жёсткое ограничение, которое нельзя изменять при уравнивании. Чем меньше σ, тем сильнее размер влияет на расчёт. σ — точность замера, а не невязка.</p>`; $('length').onchange=e=>{let v=e.target.value;l.d=v!==''&&+v>0?+v:null;autoAdjust();render()};$('lineSigma').onchange=e=>{const raw=e.target.value.trim();const v=raw===''?null:Number(raw);if(v!==null&&(!Number.isFinite(v)||v<0)){alert("σ должно быть неотрицательным числом");render();return}l.s=v;autoAdjust();render()};$('axis').onchange=e=>{l.axis=e.target.value;autoAdjust();render()};$('deleteLine').onclick=deleteSelected}renderRelationsPanel();$('pointSelection').textContent=selectedPoints.length?'Выбраны точки: '+selectedPoints.map(id=>'P'+id).join(' + ')+(selectedPoints.length===2?' — можно совместить':' — Shift + щелчок по второй точке'):'Выделено точек: 0/2. Щёлкни по первой, затем Shift + щелчок по второй.';$('mergePoints').disabled=selectedPoints.length!==2;$('bindings').innerHTML=nodes.filter(n=>lines.some(l=>l.a===n.id||l.b===n.id)).map(n=>`<span class="pill">P${n.id}: ${lines.filter(l=>l.a===n.id||l.b===n.id).map(l=>'L'+l.id).join(', ')}</span>`).join(' ')||'<span class="muted">Нет узлов</span>';{let errors=lines.filter(l=>l.d>0&&getNode(l.a)&&getNode(l.b)).map(l=>({id:l.id,e:xy(getNode(l.a),getNode(l.b))*10-l.d}));let maxError=Math.max(0,...errors.map(q=>Math.abs(q.e)));$('residuals').innerHTML='<h3>Невязки измерений</h3>'+(errors.length?`<p class="muted">Разница между длиной на текущем чертеже и введённым размером. Максимальная по модулю: <b>${fmt(maxError)} мм</b>.</p>`+errors.map(q=>`<div class="row" style="justify-content:space-between"><span>L${q.id}</span><b style="color:${Math.abs(q.e)>10?'#bd4a35':'#377a53'}">${q.e>=0?'+':''}${fmt(q.e)} мм</b></div>`).join(''):'<p class="muted">Задай длину хотя бы одной линии, чтобы увидеть невязки.</p>')}}$('lines').addEventListener('click',e=>{let item=e.target.closest('[data-choose]');if(item){if(mode!=='select')setMode('select');chooseLine(+item.dataset.choose,e.shiftKey)}});$('freezeResiduals').onclick=()=>{
+ const measured=lines.filter(l=>l.d>0&&getNode(l.a)&&getNode(l.b));
+ if(!measured.length){$('status').textContent='Нет линий с заданными размерами для переноса невязок.';return}
+ let changed=0,kept=0;
+ for(const l of measured){
+  const deviation=Math.abs(xy(getNode(l.a),getNode(l.b))*10-l.d);
+  if(!Number.isFinite(deviation)){kept++;continue}
+  const previous=l.s==null?Infinity:Number(l.s);
+  // An explicitly set positive sigma always wins if it is smaller.
+  if(Number.isFinite(previous)&&previous>=0&&previous<=deviation){kept++;continue}
+  // A zero residual fixes an exact reference dimension.
+  l.s=deviation;changed++;
+ }
+ // Changing sigma changes weights, not the geometry at the moment of capture.
+ render();
+ $('status').textContent=`Невязки перенесены в σ: обновлено ${changed}, сохранено прежнее значение ${kept}. Геометрия не изменена.`;
+};$('showAdjusted').onchange=render;
+function linear(A,b){let n=b.length,M=A.map((r,i)=>[...r,b[i]]);for(let k=0;k<n;k++){let best=k;for(let i=k+1;i<n;i++)if(Math.abs(M[i][k])>Math.abs(M[best][k]))best=i;if(Math.abs(M[best][k])<1e-12)return null;[M[k],M[best]]=[M[best],M[k]];let p=M[k][k];for(let j=k;j<=n;j++)M[k][j]/=p;for(let i=0;i<n;i++)if(i!==k){let t=M[i][k];for(let j=k;j<=n;j++)M[i][j]-=t*M[k][j]}}return M.map(r=>r[n])}
+function relationPick(item){if(!item)return;let type=$('relationType').value;if(type==='horizontal'||type==='vertical'){if(item.kind==='line')addRelation(type,item.id);return}if(!relationFirst){relationFirst=item;selected=item.kind==='line'?item.id:selected;render();return}let a=relationFirst;relationFirst=null;if(type==='pointline'){let point=a.kind==='node'?a:item.kind==='node'?item:null;let line=a.kind==='line'?a:item.kind==='line'?item:null;if(point&&line)addRelation(type,line.id,null,point.id)}else if(a.kind==='line'&&item.kind==='line'&&a.id!==item.id)addRelation(type,a.id,item.id);else $('status').textContent='Для этой привязки выбери две разные линии.';render()}
+function addRelation(type,a,b=null,point=null){if(relations.some(r=>r.type===type&&r.a===a&&r.b===b&&r.point===point))return;relations.push({id:Date.now()+Math.random(),type,a,b,point});autoAdjust();render()}
+$('applyRelation').onclick=()=>{if(selected===null)return;let type=$('relationType').value;if(type==='horizontal'||type==='vertical'){for(let id of (multiSelected.length?multiSelected:[selected]))addRelation(type,id)}else if(multiSelected.length===2&&type!=='pointline'){addRelation(type,multiSelected[0],multiSelected[1])}else{let id=selected;setMode('relation');relationFirst={kind:'line',id};render()}};
+const relationLabels={pointline:'Точка на линии',parallel:'Параллельно',collinear:'Коллинеарно',perpendicular:'Перпендикулярно',horizontal:'Горизонтально',vertical:'Вертикально'};
+const relationGlyph={pointline:'◉',parallel:'∥',collinear:'≡',perpendicular:'⊥',horizontal:'━',vertical:'┃'};
+function renderRelationsPanel(){let rs=relations.filter(r=>r.a===selected||r.b===selected||(getLine(selected)&&r.point!==null&&[getLine(selected).a,getLine(selected).b].includes(r.point)));$('relationsList').innerHTML=rs.map(r=>`<div class="row"><span title="${relationLabels[r.type]}">${relationGlyph[r.type]} ${relationLabels[r.type]} · L${r.a}${r.b?' / L'+r.b:''}${r.point?' / P'+r.point:''}</span><button class="smallbtn" data-remove-rel="${r.id}">×</button></div>`).join('')||'<p class="muted">Для выбранной линии привязок нет.</p>'}
+$('relationsList').addEventListener('click',e=>{let b=e.target.closest('[data-remove-rel]');if(!b)return;relations=relations.filter(r=>String(r.id)!==b.dataset.removeRel);if(String(selectedRelation)===b.dataset.removeRel)selectedRelation=null;autoAdjust();render()});
+function deleteSelectedRelation(){
+ if(selectedRelation===null)return false;
+ const id=String(selectedRelation);
+ if(!relations.some(r=>String(r.id)===id)){selectedRelation=null;render();return false}
+ relations=relations.filter(r=>String(r.id)!==id);
+ selectedRelation=null;
+ // Preserve the selected lines and points for the next Delete press.
+ autoAdjust();render();
+ $('status').textContent='Привязка удалена. Объекты остались выделенными; следующее нажатие Delete удалит объекты.';
+ return true;
+}
+function selectRelationObjects(id){
+ const r=relations.find(q=>String(q.id)===String(id));if(!r)return;
+ // Relation icons behave like a SolidWorks relation: select all its participating objects.
+ setMode('select');
+ const lineIds=[r.a,r.b].filter(id=>id!=null&&getLine(id));
+ multiSelected=[...new Set(lineIds)];selected=multiSelected.at(-1)??null;
+ selectedPoints=r.point!=null&&getNode(r.point)?[r.point]:[];
+ selectedRelation=r.id;
+ render();
+ $('status').textContent='Привязка «'+relationLabels[r.type]+'»: '+multiSelected.map(id=>'L'+id).concat(selectedPoints.map(id=>'P'+id)).join(' + ');
+}
+function drawRelationIcons(){
+ const rs=relations.filter(r=>r.a===selected||r.b===selected||(r.point!=null&&selectedPoints.includes(r.point)));
+ const grouped=new Map();
+ for(const r of rs){if(!grouped.has(r.a))grouped.set(r.a,[]);grouped.get(r.a).push(r)}
+ const u=screenUnit();
+ for(const [lineId,items] of grouped){
+  const l=getLine(lineId);if(!l)continue;
+  const a=getNode(l.a),b=getNode(l.b);if(!a||!b)continue;
+  const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+  // Same local tangent and normalized orientation as the line label.
+  let angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
+  if(angle>90)angle-=180;if(angle< -90)angle+=180;
+  // Label baseline is at -4*u; the icons sit at +4*u from the line,
+  // on the opposite side, regardless of line direction or slope.
+  const size=14*u,step=18*u,offset=10*u;
+  const group=elem('g',{transform:`translate(${mx} ${my}) rotate(${angle})`});
+  items.forEach((r,i)=>{
+   const x=(i-(items.length-1)/2)*step;
+   const g=elem('g',{'data-relation-icon':r.id,style:'cursor:pointer',role:'button','aria-label':relationLabels[r.type],tabindex:'0'} ,group);
+   elem('rect',{x:x-size/2,y:offset-size/2,width:size,height:size,rx:3*u,fill:'#f4fbff',stroke:'#4787b8','stroke-width':.8*u},g);
+   const t=elem('text',{x,y:offset+3.5*u,'font-size':11*u,'font-weight':'bold','text-anchor':'middle',fill:'#17689c','pointer-events':'none'},g);
+   t.textContent=relationGlyph[r.type];
+  });
+ }
+}
+svg.addEventListener('keydown',e=>{const icon=e.target.closest('[data-relation-icon]');if(icon&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selectRelationObjects(icon.dataset.relationIcon)}});
+function makeConstraints(initial){
+ const ids=nodes.map(n=>n.id),index=new Map(ids.map((id,i)=>[id,i]));
+ const pos=(v,id)=>{let k=index.get(id);return {x:v[2*k],y:v[2*k+1]}};
+ function residual(v){const soft=[],hard=[];const addHard=(value,label,scale=1)=>hard.push({v:value/scale,label});
+ for(const l of lines){const a=pos(v,l.a),b=pos(v,l.b),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+  if(l.d>0){if(l.s===0)addHard(len-l.d,'Эталон L'+l.id);else soft.push({v:(len-l.d)/(l.s??(Number($('sigma').value)>0?Number($('sigma').value):5)),label:'Размер L'+l.id})}
+  if(l.axis==='h')addHard(dy,'Горизонталь L'+l.id);
+  if(l.axis==='v')addHard(dx,'Вертикаль L'+l.id);
+ }
+ for(const r of relations){let l=getLine(r.a),q=getLine(r.b);if(!l)continue;let a=pos(v,l.a),b=pos(v,l.b),dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
+  if(r.type==='horizontal')addHard(dy,'Горизонталь');
+  if(r.type==='vertical')addHard(dx,'Вертикаль');
+  if(r.type==='pointline'&&index.has(r.point)){let p=pos(v,r.point);addHard(((p.x-a.x)*dy-(p.y-a.y)*dx)/Math.max(d,1e-6),'Точка на линии')}
+  if(q){let c=pos(v,q.a),e=pos(v,q.b),ux=e.x-c.x,uy=e.y-c.y,un=Math.hypot(ux,uy),den=Math.max(d*un,1e-6);
+   if(['parallel','collinear'].includes(r.type))addHard((dx*uy-dy*ux)/den*1000,'Параллельность');
+   if(r.type==='perpendicular')addHard((dx*ux+dy*uy)/den*1000,'Перпендикулярность');
+   if(r.type==='collinear')addHard(((c.x-a.x)*dy-(c.y-a.y)*dx)/Math.max(d,1e-6),'Коллинеарность');
+  }
+ }
+ return {soft,hard};
+ }
+ return {ids,residual};
+}
+// Equality-constrained Levenberg–Marquardt with a damped KKT system.
+// Redundant equalities are handled by a small dual regularizer; every result
+// is independently checked against the *unregularized* constraints.
+function optimize(initial){
+ const {ids,residual}=makeConstraints(initial),anchor=initial.slice(),n=initial.length;
+ let x=initial.slice(),lambda=1,accepted=false;
+ if(!n)return {ids,x,raw:[],ok:true};
+ // Escape the singular derivative at a zero-length line.
+ for(const l of lines){if(!(l.d>0))continue;let i=ids.indexOf(l.a),j=ids.indexOf(l.b);if(i<0||j<0)continue;
+  if(Math.hypot(x[2*i]-x[2*j],x[2*i+1]-x[2*j+1])<1e-7){x[2*j]+=Math.max(1,l.d*.5)}
+ }
+ function evaluate(v){let r=residual(v);let soft=r.soft.map(z=>z.v);for(let i=0;i<n;i++)soft.push((v[i]-anchor[i])/1e6);return {soft,hard:r.hard.map(z=>z.v),raw:r}}
+ const norm=a=>a.reduce((t,v)=>t+v*v,0),maxabs=a=>Math.max(0,...a.map(Math.abs));
+ for(let iter=0;iter<140;iter++){
+  const cur=evaluate(x),m=cur.soft.length,k=cur.hard.length;
+  if(![...cur.soft,...cur.hard].every(Number.isFinite))break;
+  const J=Array.from({length:m},()=>Array(n).fill(0)),H=Array.from({length:k},()=>Array(n).fill(0));
+  for(let j=0;j<n;j++){let h=Math.max(1e-4,Math.abs(x[j])*1e-7),y=x.slice();y[j]+=h;let r=evaluate(y);
+   for(let i=0;i<m;i++)J[i][j]=(r.soft[i]-cur.soft[i])/h;
+   for(let i=0;i<k;i++)H[i][j]=(r.hard[i]-cur.hard[i])/h;
+  }
+  const A=Array.from({length:n+k},()=>Array(n+k).fill(0)),rhs=Array(n+k).fill(0);
+  for(let i=0;i<n;i++){
+   for(let t=0;t<m;t++)rhs[i]-=J[t][i]*cur.soft[t];
+   for(let j=0;j<n;j++){for(let t=0;t<m;t++)A[i][j]+=J[t][i]*J[t][j]}
+   A[i][i]+=lambda;
+   for(let t=0;t<k;t++){A[i][n+t]=H[t][i];A[n+t][i]=H[t][i]}
+  }
+  for(let t=0;t<k;t++){rhs[n+t]=-cur.hard[t];A[n+t][n+t]=-1e-10}
+  let step=linear(A,rhs);if(!step||!step.every(Number.isFinite)){lambda*=10;if(lambda>1e12)break;continue}
+  const base=norm(cur.soft)+1e6*norm(cur.hard);let improved=false,change=0;
+  for(let alpha=1;alpha>=1/1024;alpha/=2){let y=x.map((v,i)=>v+alpha*step[i]),r=evaluate(y),merit=norm(r.soft)+1e6*norm(r.hard);
+   if(Number.isFinite(merit)&&merit<base-1e-12){change=Math.max(...step.slice(0,n).map(v=>Math.abs(v*alpha)));x=y;improved=true;accepted=true;break}
+  }
+  if(improved){lambda=Math.max(1e-9,lambda/2);if(change<1e-5&&maxabs(evaluate(x).hard)<1e-5)break}
+  else {lambda*=8;if(lambda>1e12)break}
+ }
+ const final=evaluate(x),hardError=maxabs(final.hard),finite=x.every(Number.isFinite);
+ return {ids,x,raw:[...final.raw.soft.map(r=>({...r,hard:false})),...final.raw.hard.map(r=>({...r,hard:true}))],ok:finite&&hardError<1e-3,hardError,accepted};
+}
+function autoAdjust(){
+ if(!nodes.length)return;
+ let initial=nodes.flatMap(n=>[n.x*10,n.y*10]),out=optimize(initial);
+ if(!out.ok){$('status').textContent='Уравнивание отклонено: эталонные размеры или геометрические привязки несовместимы либо решатель не сошёлся. Геометрия сохранена. Максимальное нарушение ограничения: '+fmt(out.hardError??0)+' мм (нормированное).';return out}
+ let maxDim=Math.max(0,...lines.filter(l=>l.d>0).map(l=>{let i=out.ids.indexOf(l.a),j=out.ids.indexOf(l.b);return Math.abs(Math.hypot(out.x[2*i]-out.x[2*j],out.x[2*i+1]-out.x[2*j+1])-l.d)}));
+ out.ids.forEach((id,i)=>{let n=getNode(id);n.x=out.x[2*i]/10;n.y=out.x[2*i+1]/10});solution=null;
+ $('status').textContent=maxDim<.15?'Эскиз перестроен. Эталонные размеры и привязки проверены.':`Уравнивание выполнено. Максимальная невязка измерений ${fmt(maxDim)} мм; эталоны и привязки соблюдены.`;
+ return out;
+}
+function solve(){autoAdjust();render()};$('solve').onclick=solve;
+
+function validateProject(o){if(!Array.isArray(o.nodes)||!Array.isArray(o.lines)||!Array.isArray(o.relations||[]))throw Error('Неверная структура JSON');const ids=new Set();for(const n of o.nodes){if(!Number.isSafeInteger(n.id)||ids.has(n.id)||!Number.isFinite(n.x)||!Number.isFinite(n.y))throw Error('Недопустимая точка');ids.add(n.id)}const lineIds=new Set();for(const l of o.lines){if(!Number.isSafeInteger(l.id)||lineIds.has(l.id)||!ids.has(l.a)||!ids.has(l.b)||l.a===l.b||!(l.d==null||(Number.isFinite(l.d)&&l.d>0))||!(l.s==null||(Number.isFinite(l.s)&&l.s>=0))||!['free','h','v'].includes(l.axis))throw Error('Недопустимая линия');lineIds.add(l.id)}for(const r of o.relations||[]){if(!['horizontal','vertical','pointline','parallel','collinear','perpendicular'].includes(r.type)||!lineIds.has(r.a)||(r.b!=null&&!lineIds.has(r.b))||(r.point!=null&&!ids.has(r.point)))throw Error('Недопустимая привязка')}if(o.view&&(!['x','y','w','h'].every(k=>Number.isFinite(o.view[k]))||o.view.w<=0||o.view.h<=0))throw Error('Недопустимый масштаб')}
+// AutoCAD R12 ASCII DXF: one LINE entity per adjusted segment, model units = mm.
+// The yellow adjusted layer is represented by solution when available; after
+// autoAdjust() replaces the sketch geometry, the current nodes are the result.
+function buildAdjustedDXF(){
+ const coords=solution&&typeof solution==='object'?solution:null;
+ const valid=lines.map(l=>{
+  const a=coords?.[l.a]??getNode(l.a),b=coords?.[l.b]??getNode(l.b);
+  if(!a||!b||![a.x,a.y,b.x,b.y].every(Number.isFinite))throw Error('Невозможно экспортировать линию L'+l.id);
+  return {a,b};
+ });
+ const out=[];const pair=(code,value)=>{out.push(String(code),String(value))};
+ pair(0,'SECTION');pair(2,'HEADER');pair(9,'$ACADVER');pair(1,'AC1009');
+ pair(9,'$INSUNITS');pair(70,4);pair(0,'ENDSEC');
+ pair(0,'SECTION');pair(2,'TABLES');pair(0,'TABLE');pair(2,'LAYER');pair(70,1);
+ pair(0,'LAYER');pair(2,'ADJUSTED');pair(70,0);pair(62,2);pair(6,'CONTINUOUS');
+ pair(0,'ENDTAB');pair(0,'ENDSEC');pair(0,'SECTION');pair(2,'ENTITIES');
+ for(const {a,b} of valid){
+  pair(0,'LINE');pair(8,'ADJUSTED');
+  pair(10,a.x*10);pair(20,-a.y*10);pair(30,0);
+  pair(11,b.x*10);pair(21,-b.y*10);pair(31,0);
+ }
+ pair(0,'ENDSEC');pair(0,'EOF');return out.join('\r\n')+'\r\n';
+}
+$('exportDxf').onclick=()=>{
+ if(!lines.length){$('status').textContent='Нет линий для экспорта DXF.';return}
+ try{download('obmer_adjusted.dxf',buildAdjustedDXF(),'application/dxf');$('status').textContent='DXF экспортирован: геометрия в миллиметрах, слой ADJUSTED.'}
+ catch(e){$('status').textContent='Ошибка экспорта DXF: '+e.message}
+};
+function download(name,data,type){let url=URL.createObjectURL(new Blob([data],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}$('save').onclick=()=>download('obmer.json',JSON.stringify({version:3,nodes,lines,relations,solution,view},null,2),'application/json');$('load').onclick=()=>$('file').click();$('file').onchange=async e=>{try{let o=JSON.parse(await e.target.files[0].text());if(o.version===2||o.version===3){validateProject(o);nodes=o.nodes;lines=o.lines;relations=o.relations||[];solution=o.solution||null;view=o.view||view}else if(Array.isArray(o.pts)){nodes=o.pts.map((p,i)=>({id:i+1,x:p.x,y:p.y}));lines=[];for(let i=0;i<nodes.length-1;i++)lines.push({id:lines.length+1,a:i+1,b:i+2,d:null,s:null,axis:'free'});if(o.closed&&nodes.length>2)lines.push({id:lines.length+1,a:nodes.length,b:1,d:null,s:null,axis:'free'});for(let d of o.dims||[]){let l=lines.find(l=>(l.a===d.a+1&&l.b===d.b+1)||(l.b===d.a+1&&l.a===d.b+1));if(l){l.d=d.d;l.s=d.s}else lines.push({id:lines.length+1,a:d.a+1,b:d.b+1,d:d.d,s:d.s,axis:'free'})}solution=null}else throw Error('Неизвестный формат');nextNode=Math.max(0,...nodes.map(n=>n.id))+1;nextLine=Math.max(0,...lines.map(l=>l.id))+1;selected=null;selectedPoints=[];selectedRelation=null;first=null;resetUndoHistory();render()}catch(err){alert('Ошибка открытия: '+err.message)}e.target.value=''};$('export').onclick=()=>{let clone=svg.cloneNode(true);clone.querySelectorAll('[data-node],[data-line]').forEach(n=>{n.removeAttribute('data-node');n.removeAttribute('data-line')});download('obmer.svg',new XMLSerializer().serializeToString(clone),'image/svg+xml')};$('reset').onclick=()=>{if(confirm('Очистить чертёж?')){nodes=[];lines=[];relations=[];solution=null;rulerStart=null;rulerEnd=null;rulerHover=null;selected=null;selectedPoints=[];selectedRelation=null;first=null;nextNode=nextLine=1;render()}};$('fit').onclick=()=>{if(!nodes.length)return;let all=[...nodes,...(solution?Object.values(solution):[])],minX=Math.min(...all.map(n=>n.x))-90,maxX=Math.max(...all.map(n=>n.x))+90,minY=Math.min(...all.map(n=>n.y))-90,maxY=Math.max(...all.map(n=>n.y))+90;view={x:minX,y:minY,w:Math.max(200,maxX-minX),h:Math.max(160,maxY-minY)};render()};svg.addEventListener('wheel',e=>{e.preventDefault();let p=point(e),factor=e.deltaY>0?1.12:.89;view.x=p.x-(p.x-view.x)*factor;view.y=p.y-(p.y-view.y)*factor;view.w*=factor;view.h*=factor;render()},{passive:false});render();
+</script></body></html>
